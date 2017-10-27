@@ -122,25 +122,22 @@ void ppupdate(char* elevs, char* prob, int nl, int nbasins, struct band3 *elev,
 
 				}		/* end switch */
 
-
 				/* see if we're on a boundary */
 				if (that_basin != ii) {
-
 				    /* what is that_basin if that_elev is null ? */
 				    if (is_null(that_elev)) {
 						barrier_height = this_elev;
 				    } else {
 						barrier_height = get_max(that_elev, this_elev);
 				    }
+				    if(ii >= nbasins)
+				    	continue;
 				    if (get_min(barrier_height, list[ii].pp) == barrier_height) {
 						/* save the old list entry in case we need it to fix a loop */
-						// TODO: There seems to be a problem in the below block.
 						if (list[ii].next != that_basin) {
-						    memcpy(list[ii].pp_alt, list[ii].pp, bpe());
+						    //memcpy(list[ii].pp_alt, list[ii].pp, bpe());
 						    list[ii].next_alt = list[ii].next;
 						}
-		   	G_verbose_message("test %d %d %d %d", i, nl, j, basins->ns);
-//		   	G_verbose_message("test");
 						/* create the new list entry */
 						memcpy(list[ii].pp, barrier_height, bpe());
 						list[ii].next = that_basin;
@@ -157,8 +154,6 @@ void ppupdate(char* elevs, char* prob, int nl, int nbasins, struct band3 *elev,
 		}			/* end cell */
 
     }				/* end row */
-
-
 
 
     /* Look for pairs of basins that drain to each other */
@@ -221,7 +216,7 @@ void ppupdate(char* elevs, char* prob, int nl, int nbasins, struct band3 *elev,
 		//read(fb, basins->b[1], basins->sz);
 		for (j = 0; j < basins->ns; j += 1) {
 		    ii = *((CELL *) basins->b[1] + j);
-		    if (ii <= 0)
+		    if (ii <= 0 || ii >= nbasins)
 				continue;
 		    this_elev = elev->b[1] + j * bpe();
 		    memcpy(this_elev, get_max(this_elev, list[ii].pp), bpe());

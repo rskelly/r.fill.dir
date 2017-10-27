@@ -190,13 +190,13 @@ int main(int argc, char **argv)
 
     // The size of the memory mappings. Must be rounded up to the nearest page boundary.
     off_t mapsize = nrows * ncols;
-    off_t elevsize = ((mapsize * sizeof(CELL)) / sysconf(_SC_PAGE_SIZE) + 1) * sysconf(_SC_PAGE_SIZE);
-    off_t dirsize = ((mapsize * sizeof(int)) / sysconf(_SC_PAGE_SIZE) + 1) * sysconf(_SC_PAGE_SIZE);
-    off_t probsize = ((mapsize * sizeof(int)) / sysconf(_SC_PAGE_SIZE) + 1) * sysconf(_SC_PAGE_SIZE);
+    off_t elevsize = ((mapsize * bpe()) / sysconf(_SC_PAGE_SIZE) + 1) * sysconf(_SC_PAGE_SIZE);
+    off_t dirsize = ((mapsize * sizeof(CELL)) / sysconf(_SC_PAGE_SIZE) + 1) * sysconf(_SC_PAGE_SIZE);
+    off_t probsize = ((mapsize * sizeof(CELL)) / sysconf(_SC_PAGE_SIZE) + 1) * sysconf(_SC_PAGE_SIZE);
 
-    char* elev = mmap(NULL, elevsize, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, NULL, 0);
-    char* dirs = mmap(NULL, dirsize, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, NULL, 0);
-    char* prob = mmap(NULL, probsize, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, NULL, 0);
+    char* elev = mmap(NULL, elevsize, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
+    char* dirs = mmap(NULL, dirsize, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
+    char* prob = mmap(NULL, probsize, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
 
     G_verbose_message(_("Memory allocations: elev: %ld; dirs: %ld; probs: %ld"), elevsize, dirsize, probsize);
     
