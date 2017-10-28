@@ -58,6 +58,33 @@
 
 static int dir_type(int type, int dir);
 
+int allocate(char** elev, int elevsize, char** dirs, int dirsize, 
+    char** prob, int probsize, struct Flag* flag) {
+    if(flag->answer) {
+        *elev = (char*) mmap(NULL, elevsize, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
+        *dirs = (char*) mmap(NULL, dirsize, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
+        *prob = (char*) mmap(NULL, probsize, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
+    } else {
+        *elev = (char*) malloc(elevsize);
+        *dirs = (char*) malloc(dirsize);
+        *prob = (char*) malloc(probsize);
+    }
+    return (*elev && *dirs && *prob);
+}
+
+void deallocate(char* elev, int elevsize, char* dirs, int dirsize, 
+    char* prob, int probsize, struct Flag* flag) {
+    if(flag->answer) {
+        munmap(elev, elevsize);
+        munmap(dirs, dirsize);
+        munmap(prob, probsize);
+    } else {
+        free(elev);
+        free(dirs);
+        free(prob);
+    }
+}
+
 int main(int argc, char **argv)
 {
 
@@ -72,7 +99,7 @@ int main(int argc, char **argv)
     struct Cell_head window;
     struct GModule *module;
     struct Option *opt1, *opt2, *opt3, *opt4, *opt5;
-    struct Flag *flag1;
+    struct Flag *flag1, *flag2;
     int in_type, bufsz;
     void *in_buf;
     CELL *out_buf;
@@ -117,6 +144,10 @@ int main(int argc, char **argv)
     flag1 = G_define_flag();
     flag1->key = 'f';
     flag1->description = _("Find unresolved areas only");
+    
+    flag2 = G_define_flag();
+    flag2->key = 'm';
+    flag2->description = _("Use mapped memory");
     
     if (G_parser(argc, argv))
 	   exit(EXIT_FAILURE);
@@ -182,15 +213,20 @@ int main(int argc, char **argv)
     off_t probsize = ((mapsize * sizeof(CELL)) / sysconf(_SC_PAGE_SIZE) + 1) * sysconf(_SC_PAGE_SIZE);
     G_verbose_message(_("Memory allocations: elev: %ld; dirs: %ld; probs: %ld"), elevsize, dirsize, probsize);
 
-    // Map anonymous memory for images in-progress. Replaces the file handles used in the original.
-    char* elev = mmap(NULL, elevsize, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
-    char* dirs = mmap(NULL, dirsize, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
-    char* prob = mmap(NULL, probsize, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
+    // Pointers to memory (mapped or malloced). Replaces the file handles used in the original.
+    char* elev;
+    char* dirs;
+    char* prob;
 
     // Pointers to the mapped memory. These can be moved, the original pointers should not be.
     char* elevbuf;
     char* dirsbuf;
     char* probbuf;
+
+    if(!allocate(&elev, elevsize, &dirs, dirsize, &prob, probsize, flag2)) {
+        G_important_message(_("Failed to allocate memory. Try using mapped?"));
+        return 1;
+    };
 
     // Copy the source image into the mapped buffer.
     G_message(_("Reading input elevation raster map..."));
@@ -258,7 +294,6 @@ int main(int argc, char **argv)
     	    Rast_put_row(bas_id, out_buf, CELL_TYPE);
     	}
     	Rast_close(bas_id);
-        munmap(prob, probsize);
     }
 
     G_important_message(_("Writing filled and directions maps..."));
@@ -281,11 +316,10 @@ int main(int argc, char **argv)
     Rast_write_colors(new_map_name, G_mapset(), &colors);
 
     // Close up the rasters and unmap the memory.
-    Rast_close(new_id);
-    munmap(elev, elevsize);
-    
+    Rast_close(new_id);    
     Rast_close(dir_id);
-    munmap(dirs, dirsize);
+
+    deallocate(elev, elevsize, dirs, dirsize, prob, probsize, flag2);
 
     G_free(in_buf);
     G_free(out_buf);
