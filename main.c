@@ -47,6 +47,7 @@
 
 /* for using the close statement */
 #include <unistd.h>
+#include <errno.h>
 
 #include <grass/gis.h>
 #include <grass/raster.h>
@@ -58,22 +59,42 @@
 
 static int dir_type(int type, int dir);
 
-int allocate(char** elev, int elevsize, char** dirs, int dirsize, 
-    char** prob, int probsize, struct Flag* flag) {
+int allocate(char** elev, off_t elevsize, char** dirs, off_t dirsize, 
+    char** prob, off_t probsize, struct Flag* flag) {
+         G_verbose_message(_("%ld %ld %ld"), elevsize, dirsize, probsize);
+
     if(flag->answer) {
-        *elev = (char*) mmap(NULL, elevsize, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
-        *dirs = (char*) mmap(NULL, dirsize, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
-        *prob = (char*) mmap(NULL, probsize, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
+        if(MAP_FAILED == (*elev = (char*) mmap(NULL, elevsize, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0))) {
+            G_important_message(_("Failed to map memory for filled: %s"), strerror(errno));
+            return 0;
+        }
+        if(MAP_FAILED == (*dirs = (char*) mmap(NULL, dirsize, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0))) {
+            G_important_message(_("Failed to map memory for directions: %s"), strerror(errno));
+            return 0;
+        }
+        if(MAP_FAILED == (*prob = (char*) mmap(NULL, probsize, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0))) {
+            G_important_message(_("Failed to map memory for problems: %s"), strerror(errno));
+            return 0;
+        }
     } else {
-        *elev = (char*) malloc(elevsize);
-        *dirs = (char*) malloc(dirsize);
-        *prob = (char*) malloc(probsize);
+        if(!(*elev = (char*) malloc(elevsize))) {
+            G_important_message(_("Failed to allocate memory for filled: %s"), strerror(errno));
+            return 0;
+        }
+        if(!(*dirs = (char*) malloc(dirsize))) {
+            G_important_message(_("Failed to allocate memory for directions: %s"), strerror(errno));
+            return 0;
+        }
+        if(!(*prob = (char*) malloc(probsize))) {
+            G_important_message(_("Failed to allocate memory for problems: %s"), strerror(errno));            
+            return 0;
+        }
     }
-    return (*elev && *dirs && *prob);
+    return 1;
 }
 
-void deallocate(char* elev, int elevsize, char* dirs, int dirsize, 
-    char* prob, int probsize, struct Flag* flag) {
+void deallocate(char* elev, off_t elevsize, char* dirs, off_t dirsize, 
+    char* prob, off_t probsize, struct Flag* flag) {
     if(flag->answer) {
         munmap(elev, elevsize);
         munmap(dirs, dirsize);
