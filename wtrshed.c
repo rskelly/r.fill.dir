@@ -110,14 +110,10 @@ void wtrshed(char* prob, char* dirs, int nl, int ns, int mxbuf)
 		    probbuf = prob + bas[i].offset;
 		    memcpy(bas[i].p, probbuf, bufsz);
 		    probbuf += bufsz;
-		    //lseek(fm, bas[i].offset, SEEK_SET);
-		    //read(fm, bas[i].p, bufsz);
 
 		    dirsbuf = dirs + dir[i].offset;
 		    memcpy(dir[i].p, dirsbuf, bufsz);
 		    dirsbuf += bufsz;
-		    //lseek(fd, dir[i].offset, SEEK_SET);
-		    //read(fd, dir[i].p, bufsz);
 
 		    rdline++;
 		}
@@ -137,8 +133,6 @@ void wtrshed(char* prob, char* dirs, int nl, int ns, int mxbuf)
 		    probbuf = prob + bas[sline].offset;
 		    memcpy(probbuf, bas[sline].p, bufsz);
 		    probbuf += bufsz;
-		    //lseek(fm, bas[sline].offset, SEEK_SET);
-		    //write(fm, bas[sline].p, bufsz);
 
 		    /* If the bottom end of the buffers reach the bottom of the file, 
 		     * rotate the buffers and read new lines */
@@ -158,14 +152,10 @@ void wtrshed(char* prob, char* dirs, int nl, int ns, int mxbuf)
 				probbuf = prob + bas[mxbuf - 1].offset;
 				memcpy(bas[mxbuf - 1].p, probbuf, bufsz);
 				probbuf += bufsz;
-				//lseek(fm, bas[mxbuf - 1].offset, SEEK_SET);
-				//read(fm, bas[mxbuf - 1].p, bufsz);
 
 				dirsbuf = dirs + dir[mxbuf - 1].offset;
 				memcpy(dir[mxbuf - 1].p, dirsbuf, bufsz);
 				dirsbuf += bufsz;
-				//lseek(fd, dir[mxbuf - 1].offset, SEEK_SET);
-				//read(fd, dir[mxbuf - 1].p, bufsz);
 
 				rdline++;
 		    }
@@ -188,14 +178,10 @@ void wtrshed(char* prob, char* dirs, int nl, int ns, int mxbuf)
 		    probbuf = prob + bas[i].offset;
 		    memcpy(bas[i].p, probbuf, bufsz);
 		    probbuf += bufsz;
-		    //lseek(fm, bas[i].offset, SEEK_SET);
-		    //read(fm, bas[i].p, bufsz);
 
 		    dirsbuf = dirs + dir[i].offset;
 		    memcpy(dir[i].p, dirsbuf, bufsz);
 		    dirsbuf += bufsz;
-		    //lseek(fd, dir[i].offset, SEEK_SET);
-		    //read(fd, dir[i].p, bufsz);
 
 		    rdline--;
 		}
@@ -215,8 +201,6 @@ void wtrshed(char* prob, char* dirs, int nl, int ns, int mxbuf)
 		    probbuf = prob + bas[nline - 1].offset;
 		    memcpy(probbuf, bas[nline - 1].p, bufsz);
 		    probbuf += bufsz;
-		    //lseek(fm, bas[nline - 1].offset, SEEK_SET);
-		    //write(fm, bas[nline - 1].p, bufsz);
 
 		    /* Until the top of the buffers reach the top of the file, 
 		     * rotate the buffers and read new lines */
@@ -236,14 +220,10 @@ void wtrshed(char* prob, char* dirs, int nl, int ns, int mxbuf)
 				probbuf = prob + bas[0].offset;
 				memcpy(probbuf, bas[0].p, bufsz);
 				probbuf += bufsz;
-				//lseek(fm, bas[0].offset, SEEK_SET);
-				//read(fm, bas[0].p, bufsz);
 
 				dirsbuf = dirs + dir[0].offset;
 				memcpy(dirsbuf, bas[0].p, bufsz);
 				dirsbuf += bufsz;
-				//lseek(fd, dir[0].offset, SEEK_SET);
-				//read(fd, dir[0].p, bufsz);
 
 				rdline--;
 		    }

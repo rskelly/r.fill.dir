@@ -113,11 +113,11 @@ void resolve(char* dirs, int nl, struct band3 *bnd)
     /* select a direction when there are multiple non-flat links */
 
     dirsbuf = dirs;
-    //lseek(fd, bnd->sz, SEEK_SET);
+
     for (i = 1; i < nl - 1; i += 1) {
     	memcpy(bnd->b[0], dirsbuf, bnd->sz);
     	dirsbuf += bnd->sz;
-		//read(fd, bnd->b[0], bnd->sz);
+
 		for (j = 1; j < bnd->ns - 1; j += 1) {
 	    	offset = j * isz;
 	    	if (Rast_is_c_null_value((CELL *) (bnd->b[0] + offset)))
@@ -130,8 +130,7 @@ void resolve(char* dirs, int nl, struct band3 *bnd)
 		dirsbuf -= bnd->sz;
 		memcpy(dirsbuf, bnd->b[0], bnd->sz);
 		dirsbuf += bnd->sz;
-		//lseek(fd, -bnd->sz, SEEK_CUR);
-		//write(fd, bnd->b[0], bnd->sz);
+
     }
 
     pass = 0;
@@ -147,12 +146,12 @@ void resolve(char* dirs, int nl, struct band3 *bnd)
 		G_verbose_message(_("Downward pass %d"), pass);
 
 		dirsbuf = dirs;
-		//lseek(fd, 0, SEEK_SET);
+
 		advance_band3mem(&dirsbuf, bnd);
 		advance_band3mem(&dirsbuf, bnd);
 		for (i = 1; i < nl - 1; i++) {
 			dirsbuf = dirs + (i + 1) * bnd->sz;
-		    //lseek(fd, (off_t) (i + 1) * bnd->sz, SEEK_SET);
+
 		    advance_band3mem(&dirsbuf, bnd);
 
 		    if (!active[i])
@@ -167,20 +166,18 @@ void resolve(char* dirs, int nl, struct band3 *bnd)
 					  (CELL *) bnd->b[0], (CELL *) bnd->b[1],
 					  (CELL *) bnd->b[2], &active[i], &goagain);
 				    if (goagain)
-					activity = 1;
+						activity = 1;
 				}
 		    } while (goagain);
 
 		    dirsbuf = dirs + i * bnd->sz;
 		    memcpy(dirsbuf, bnd->b[1], bnd->sz);
 		    dirsbuf += bnd->sz;
-		    //lseek(fd, (off_t) i * bnd->sz, SEEK_SET);
-		    //write(fd, bnd->b[1], bnd->sz);
 
 		}
 
 		if (!activity) {
-		    /*        G_warning(_("Could not solve for all cells")); */
+		    G_warning(_("Could not solve for all cells"));
 		    done = 1;
 		    continue;
 		}
@@ -189,12 +186,12 @@ void resolve(char* dirs, int nl, struct band3 *bnd)
 		G_verbose_message(_("Upward pass %d"), pass);
 
 		dirsbuf = dirs + (nl - 1) * bnd->sz;
-		//lseek(fd, (off_t) (nl - 1) * bnd->sz, SEEK_SET);
+
 		retreat_band3mem(&dirsbuf, bnd);
 		retreat_band3mem(&dirsbuf, bnd);
 		for (i = nl - 2; i >= 1; i -= 1) {
 			dirsbuf = dirs + (i - 1) * bnd->sz;
-		    //lseek(fd, (off_t) (i - 1) * bnd->sz, SEEK_SET);
+
 		    retreat_band3mem(&dirsbuf, bnd);
 
 		    if (!active[i])
@@ -216,12 +213,10 @@ void resolve(char* dirs, int nl, struct band3 *bnd)
 		    dirsbuf = dirs + i * bnd->sz;
 		    memcpy(dirsbuf, bnd->b[1], bnd->sz);
 		    dirsbuf += bnd->sz;
-		    //lseek(fd, (off_t) i * bnd->sz, SEEK_SET);
-		    //write(fd, bnd->b[1], bnd->sz);
 		}
 
 		if (!activity) {
-		    /*         G_warning(_("Could not solve for all cells")); */
+		    G_warning(_("Could not solve for all cells"));
 		    done = 1;
 		}
 

@@ -149,28 +149,27 @@ void filldir(char* elev, char* dirs, int nl, struct band3 *bnd)
 
     /* fill single-cell depressions, except on outer rows and columns */
     elevbuf = elev;
-    //lseek(fe, 0, SEEK_SET);
     advance_band3mem(&elevbuf, bnd);
     advance_band3mem(&elevbuf, bnd);
+
     for (i = 1; i < nl - 1; i += 1) {
+
     	elevbuf = elev + (i + 1) * bnd->sz;
-		//lseek(fe, (off_t) (i + 1) * bnd->sz, SEEK_SET);
 		advance_band3mem(&elevbuf, bnd);
+
 		if (fill_row(nl, bnd->ns, bnd)) {
 			elevbuf = elev + i * bnd->sz;
 			memcpy(elevbuf, bnd->b[1], bnd->sz);
 			elevbuf += bnd->sz;
-	    	//lseek(fe, (off_t) i * bnd->sz, SEEK_SET);
-	    	//write(fe, bnd->b[1], bnd->sz);
 		}
     }
+
     advance_band3mem(0, bnd);
+
     if (fill_row(nl, bnd->ns, bnd)) {
     	elevbuf = elev + i * bnd->sz;
     	memcpy(elevbuf, bnd->b[1], bnd->sz);
     	elevbuf += bnd->sz;
-		//lseek(fe, (off_t) i * bnd->sz, SEEK_SET);
-		//write(fe, bnd->b[1], bnd->sz);
     }
 
     /* determine the flow direction in each cell.  On outer rows and columns
@@ -181,9 +180,9 @@ void filldir(char* elev, char* dirs, int nl, struct band3 *bnd)
 
     elevbuf = elev;
     dirsbuf = dirs;
-    //lseek(fe, 0, SEEK_SET);
-    //lseek(fd, 0, SEEK_SET);
+
     advance_band3mem(&elevbuf, bnd);
+
     // TODO: The original has i < nl, but this seems to fail on advance_band, because it 
     // forces 2 too many advances.
     for (i = 0; i < nl - 2; i += 1) {
@@ -191,13 +190,12 @@ void filldir(char* elev, char* dirs, int nl, struct band3 *bnd)
 		build_one_row(i, nl, bnd->ns, bnd, dir);
 		memcpy(dirsbuf, dir, bufsz);
 		dirsbuf += bufsz;
-		//write(fd, dir, bufsz);
     }
+
     advance_band3mem(&elevbuf, bnd);
     build_one_row(i, nl, bnd->ns, bnd, dir);
 	memcpy(dirsbuf, dir, bufsz);
 	dirsbuf += bufsz;
-    //write(fd, dir, bufsz);
 
     G_free(dir);
 

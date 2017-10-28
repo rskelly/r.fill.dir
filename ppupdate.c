@@ -27,8 +27,6 @@ void backtrace(int start, int nbasins, struct links list[])
     }
 }
 
-//void ppupdate(int fe, int fb, int nl, int nbasins, struct band3 *elev,
-//	      struct band3 *basins)
 void ppupdate(char* elevs, char* prob, int nl, int nbasins, struct band3 *elev,
 	      struct band3 *basins)
 {
@@ -56,13 +54,10 @@ void ppupdate(char* elevs, char* prob, int nl, int nbasins, struct band3 *elev,
 		set_max(list[i].pp_alt);
 
 		list[i].trace = 0;
-
     }
 
     elevbuf = elevs;
     probbuf = prob;
-    //lseek(fe, 0, SEEK_SET);
-    //lseek(fb, 0, SEEK_SET);
 
     advance_band3mem(&probbuf, basins);
     advance_band3mem(&probbuf, basins);
@@ -130,8 +125,6 @@ void ppupdate(char* elevs, char* prob, int nl, int nbasins, struct band3 *elev,
 				    } else {
 						barrier_height = get_max(that_elev, this_elev);
 				    }
-				    if(ii >= nbasins)
-				    	continue;
 				    if (get_min(barrier_height, list[ii].pp) == barrier_height) {
 						/* save the old list entry in case we need it to fix a loop */
 						if (list[ii].next != that_basin) {
@@ -205,26 +198,23 @@ void ppupdate(char* elevs, char* prob, int nl, int nbasins, struct band3 *elev,
     /* fill all basins up to the elevation of their lowest bounding elevation */
     elevbuf = elevs;
     probbuf = prob;
-    //lseek(fe, 0, SEEK_SET);
-    //lseek(fb, 0, SEEK_SET);
+
     for (i = 0; i < nl; i += 1) {
     	memcpy(elev->b[1], elevbuf, elev->sz);
     	elevbuf += elev->sz;
     	memcpy(basins->b[1], probbuf, basins->sz);
     	probbuf += basins->sz;
-		//read(fe, elev->b[1], elev->sz);
-		//read(fb, basins->b[1], basins->sz);
+
 		for (j = 0; j < basins->ns; j += 1) {
 		    ii = *((CELL *) basins->b[1] + j);
-		    if (ii <= 0 || ii >= nbasins)
+		    if (ii <= 0)
 				continue;
 		    this_elev = elev->b[1] + j * bpe();
 		    memcpy(this_elev, get_max(this_elev, list[ii].pp), bpe());
 		}
+		
 		elevbuf -= elev->sz;
 		memcpy(elevbuf, elev->b[1], elev->sz);
-		//lseek(fe, -elev->sz, SEEK_CUR);
-		//write(fe, elev->b[1], elev->sz);
     }
 
     G_free(list);

@@ -57,11 +57,11 @@ int dopolys(char* dirs, char* prob, int nl, int ns)
     found = 0;
 
     dirsbuf = dirs;
-    //lseek(fd, bufsz, SEEK_SET);
+
     for (i = 1; i < nl - 1; i += 1) {
     	memcpy(dir, dirsbuf, bufsz);
     	dirsbuf += bufsz;
-		//read(fd, dir, bufsz);
+
 		for (j = 1; j < ns - 1; j += 1) {
 		    if (Rast_is_c_null_value(&dir[j]) || dir[j] >= 0)
 				continue;
@@ -94,7 +94,7 @@ int dopolys(char* dirs, char* prob, int nl, int ns)
 
     /* Compose a new raster map to contain the resulting assignments */
     probbuf = prob;
-    //lseek(fm, 0, SEEK_SET);
+
     cnt = 0;
     for (i = 0; i < nl; i += 1) {
 		for (j = 0; j < ns; j += 1)
@@ -105,7 +105,6 @@ int dopolys(char* dirs, char* prob, int nl, int ns)
 		}
 		memcpy(probbuf, dir, bufsz);
 		probbuf += bufsz;
-		//write(fm, dir, bufsz);
     }
 
     G_free(cells);

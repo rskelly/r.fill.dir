@@ -381,7 +381,7 @@ int advance_band3mem(char** mem, struct band3 *bnd)
     if (mem == 0) {
         rc = 0;
     } else {
-        memcpy(*mem, bnd->b[2], bnd->sz);
+        memcpy(bnd->b[2], *mem, bnd->sz);
         *mem += bnd->sz;
         rc = bnd->sz;
     }
@@ -420,7 +420,7 @@ int retreat_band3mem(char** mem, struct band3 *bnd)
     if (mem == 0) {
         rc = 0;
     } else {
-        memcpy(*mem, bnd->b[0], bnd->sz);
+        memcpy(bnd->b[0], *mem, bnd->sz);
         *mem -= bnd->sz;
         rc = bnd->sz;
     }

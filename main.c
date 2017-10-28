@@ -60,13 +60,12 @@ static int dir_type(int type, int dir);
 
 int main(int argc, char **argv)
 {
-    int fe, fd, fm;
+
     int i, j, type;
     int new_id;
     int nrows, ncols, nbasins;
     int map_id, dir_id, bas_id;
     char map_name[GNAME_MAX], new_map_name[GNAME_MAX];
-    const char *tempfile1, *tempfile2, *tempfile3;
     char dir_name[GNAME_MAX];
     char bas_name[GNAME_MAX];
 
@@ -80,7 +79,7 @@ int main(int argc, char **argv)
     struct band3 bnd, bndC;
     struct Colors colors; 
 
-    /*  Initialize the GRASS environment variables */
+    // Initialize the GRASS environment variables.
     G_gisinit(argv[0]);
 
     module = G_define_module();
@@ -89,9 +88,8 @@ int main(int argc, char **argv)
     G_add_keyword(_("sink"));
     G_add_keyword(_("fill sinks"));
     G_add_keyword(_("depressions"));
-    module->description =
-	_("Filters and generates a depressionless elevation map and a "
-	  "flow direction map from a given elevation raster map.");
+    module->description = _("Filters and generates a depressionless elevation map and a "
+        "flow direction map from a given elevation raster map.");
     
     opt1 = G_define_standard_option(G_OPT_R_ELEV);
     opt1->key = "input";
@@ -112,8 +110,7 @@ int main(int argc, char **argv)
     opt3->key = "format";
     opt3->type = TYPE_STRING;
     opt3->required = NO;
-    opt3->description =
-	_("Aspect direction format");
+    opt3->description = _("Aspect direction format");
     opt3->options = "agnps,answers,grass";
     opt3->answer = "grass";
     
@@ -122,56 +119,54 @@ int main(int argc, char **argv)
     flag1->description = _("Find unresolved areas only");
     
     if (G_parser(argc, argv))
-	exit(EXIT_FAILURE);
+	   exit(EXIT_FAILURE);
 
-    if (flag1->answer && opt5->answer == NULL) {
-	G_fatal_error(_("The '%c' flag requires '%s'to be specified"),
-		      flag1->key, opt5->key);
-    }
+    if (flag1->answer && opt5->answer == NULL)
+    	G_fatal_error(_("The '%c' flag requires '%s'to be specified"), flag1->key, opt5->key);
 
     type = 0;
     strcpy(map_name, opt1->answer);
     strcpy(new_map_name, opt2->answer);
     strcpy(dir_name, opt4->answer);
     if (opt5->answer != NULL)
-	strcpy(bas_name, opt5->answer);
+	   strcpy(bas_name, opt5->answer);
 
     if (strcmp(opt3->answer, "agnps") == 0)
-	type = 1;
+	   type = 1;
     else if (strcmp(opt3->answer, "answers") == 0)
-	type = 2;
+	   type = 2;
     else if (strcmp(opt3->answer, "grass") == 0)
-	type = 3;
+	   type = 3;
     
     G_debug(1, "output type (1=AGNPS, 2=ANSWERS, 3=GRASS): %d", type);
 
     if (type == 3)
-	G_verbose_message(_("Direction map is D8 resolution, i.e. 45 degrees"));
+	   G_verbose_message(_("Direction map is D8 resolution, i.e. 45 degrees"));
     
-    /* open the maps and get their file id  */
+    // Open the maps and get their file ids.
     map_id = Rast_open_old(map_name, "");
     if (Rast_read_colors(map_name, "", &colors) < 0)
         G_warning(_("Unable to read color table for raster map <%s>"), map_name);
     
-    /* allocate cell buf for the map layer */
+    // Allocate cell buf for the map layer.
     in_type = Rast_get_map_type(map_id);
 
-    /* set the pointers for multi-typed functions */
+    // Set the pointers for multi-typed functions.
     set_func_pointers(in_type);
 
-    /* get the window information  */
+    // Get the window information.
     G_get_window(&window);
     nrows = Rast_window_rows();
     ncols = Rast_window_cols();
 
-    /* buffers for internal use */
+    // Buffers for internal use.
     bndC.ns = ncols;
     bndC.sz = sizeof(CELL) * ncols;
     bndC.b[0] = G_calloc(ncols, sizeof(CELL));
     bndC.b[1] = G_calloc(ncols, sizeof(CELL));
     bndC.b[2] = G_calloc(ncols, sizeof(CELL));
 
-    /* buffers for external use */
+    // Buffers for external use.
     bnd.ns = ncols;
     bnd.sz = ncols * bpe();
     bnd.b[0] = G_calloc(ncols, bpe());
@@ -180,59 +175,51 @@ int main(int argc, char **argv)
 
     in_buf = get_buf();
 
-    //tempfile1 = G_tempfile();
-    //tempfile2 = G_tempfile();
-    //tempfile3 = G_tempfile();
-
-    //fe = open(tempfile1, O_RDWR | O_CREAT, 0666);	/* elev */
-    //fd = open(tempfile2, O_RDWR | O_CREAT, 0666);	/* dirn */
-    //fm = open(tempfile3, O_RDWR | O_CREAT, 0666);	/* problems */
-
     // The size of the memory mappings. Must be rounded up to the nearest page boundary.
     off_t mapsize = nrows * ncols;
     off_t elevsize = ((mapsize * bpe()) / sysconf(_SC_PAGE_SIZE) + 1) * sysconf(_SC_PAGE_SIZE);
     off_t dirsize = ((mapsize * sizeof(CELL)) / sysconf(_SC_PAGE_SIZE) + 1) * sysconf(_SC_PAGE_SIZE);
     off_t probsize = ((mapsize * sizeof(CELL)) / sysconf(_SC_PAGE_SIZE) + 1) * sysconf(_SC_PAGE_SIZE);
+    G_verbose_message(_("Memory allocations: elev: %ld; dirs: %ld; probs: %ld"), elevsize, dirsize, probsize);
 
+    // Map anonymous memory for images in-progress. Replaces the file handles used in the original.
     char* elev = mmap(NULL, elevsize, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
     char* dirs = mmap(NULL, dirsize, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
     char* prob = mmap(NULL, probsize, PROT_READ|PROT_WRITE, MAP_SHARED|MAP_ANONYMOUS, 0, 0);
 
-    G_verbose_message(_("Memory allocations: elev: %ld; dirs: %ld; probs: %ld"), elevsize, dirsize, probsize);
-    
+    // Pointers to the mapped memory. These can be moved, the original pointers should not be.
     char* elevbuf;
     char* dirsbuf;
     char* probbuf;
 
+    // Copy the source image into the mapped buffer.
     G_message(_("Reading input elevation raster map..."));
     for (i = 0; i < nrows; i++) {
 	   G_percent(i, nrows, 2);
 	   get_row(map_id, in_buf, i);
-	   //write(fe, in_buf, bnd.sz);
-       memcpy(elev + i * ncols * sizeof(CELL), in_buf, bnd.sz);
+       memcpy(elev + i * bnd.sz, in_buf, bnd.sz);
     }
     G_percent(1, 1, 1);
     Rast_close(map_id);
 
-    /* fill single-cell holes and take a first stab at flow directions */
+    // Fill single-cell holes and take a first stab at flow directions.
     G_message(_("Filling sinks..."));
-    //filldir(fe, fd, nrows, &bnd);
     filldir(elev, dirs, nrows, &bnd);
 
-    /* determine flow directions for ambiguous cases */
+    // Determine flow directions for ambiguous cases.
     G_message(_("Determining flow directions for ambiguous cases..."));
     resolve(dirs, nrows, &bndC);
 
-    /* mark and count the sinks in each internally drained basin */
+    // Mark and count the sinks in each internally drained basin.
     nbasins = dopolys(dirs, prob, nrows, ncols);
     if (!flag1->answer) {
-    	/* determine the watershed for each sink */
+    	// Determine the watershed for each sink.
     	wtrshed(prob, dirs, nrows, ncols, 4);
 
-    	/* fill all of the watersheds up to the elevation necessary for drainage */
+    	// Fill all of the watersheds up to the elevation necessary for drainage.
     	ppupdate(elev, prob, nrows, nbasins, &bnd, &bndC);
 
-    	/* repeat the first three steps to get the final directions */
+    	// Repeat the first three steps to get the final directions.
     	G_message(_("Repeat to get the final directions..."));
     	filldir(elev, dirs, nrows, &bnd);
     	resolve(dirs, nrows, &bndC);
@@ -247,66 +234,58 @@ int main(int argc, char **argv)
     G_free(bnd.b[1]);
     G_free(bnd.b[2]);
 
+    G_important_message(_("Writing output raster maps..."));
+
     out_buf = Rast_allocate_c_buf();
     bufsz = ncols * sizeof(CELL);
 
+    // Reset the elevations buffer position.
     elevbuf = elev;
-    //lseek(fe, 0, SEEK_SET);
     new_id = Rast_open_new(new_map_name, in_type);
 
+    // Reset the directions buffer position.
     dirsbuf = dirs;
-    //lseek(fd, 0, SEEK_SET);
     dir_id = Rast_open_new(dir_name, CELL_TYPE);
 
+    // Write problem areas to a file.
     if (opt5->answer != NULL) {
+        G_important_message(_("Writing problem map..."));
         probbuf = prob;
-    	//lseek(fm, 0, SEEK_SET);
     	bas_id = Rast_open_new(bas_name, CELL_TYPE);
-
     	for (i = 0; i < nrows; i++) {
             memcpy(out_buf, probbuf, bufsz);
             probbuf += bufsz;
-    	    //read(fm, out_buf, bufsz);
     	    Rast_put_row(bas_id, out_buf, CELL_TYPE);
     	}
-
     	Rast_close(bas_id);
-    	//close(fm);
         munmap(prob, probsize);
     }
 
-    G_important_message(_("Writing output raster maps..."));
+    G_important_message(_("Writing filled and directions maps..."));
     for (i = 0; i < nrows; i++) {
-       G_percent(i, nrows, 5);
-       memcpy(in_buf, elevbuf, bnd.sz);
-       elevbuf += bnd.sz;
-	   //read(fe, in_buf, bnd.sz);
-	   put_row(new_id, in_buf);
+        G_percent(i, nrows, 5);
+        
+        memcpy(in_buf, elevbuf, bnd.sz);
+        elevbuf += bnd.sz;
+        put_row(new_id, in_buf);
 
-       memcpy(out_buf, dirsbuf, bufsz);
-       dirsbuf += bufsz;
-	   //read(fd, out_buf, bufsz);
-
-    	for (j = 0; j < ncols; j += 1)
-    	    out_buf[j] = dir_type(type, out_buf[j]);
-
+        memcpy(out_buf, dirsbuf, bufsz);
+        dirsbuf += bufsz;
+        for (j = 0; j < ncols; j += 1)
+    	   out_buf[j] = dir_type(type, out_buf[j]);
     	Rast_put_row(dir_id, out_buf, CELL_TYPE);
     }
     G_percent(1, 1, 1);
 
-    /* copy color table from input */
+    // Copy color table from input.
     Rast_write_colors(new_map_name, G_mapset(), &colors);
 
+    // Close up the rasters and unmap the memory.
     Rast_close(new_id);
-    //close(fe);
     munmap(elev, elevsize);
     
     Rast_close(dir_id);
-    //close(fd);
     munmap(dirs, dirsize);
-    //unlink(tempfile1);
-    //unlink(tempfile2);
-    //unlink(tempfile3);
 
     G_free(in_buf);
     G_free(out_buf);
