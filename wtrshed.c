@@ -65,10 +65,9 @@ int recurse_cell(CELL flag, int i, int j, int nl, int ns,
     return rc;
 }
 
-//void wtrshed(int fm, int fd, int nl, int ns, int mxbuf)
 void wtrshed(char* prob, char* dirs, int nl, int ns, int mxbuf)
 {
-    int pass, repeat, flag, i, j, half, bufsz;
+    int pass, repeat, flag, i, j, bufsz;
     int sline, nline, rdline;
 
     struct whereandwhat hold;
@@ -84,8 +83,7 @@ void wtrshed(char* prob, char* dirs, int nl, int ns, int mxbuf)
     bufsz = ns * sizeof(CELL);
 
     /* adjust maxbuf to an even number */
-    half = mxbuf / 2;
-    mxbuf = 2 * half;
+    mxbuf += mxbuf % 2 == 0 ? 0 : 1;
 
     /* allocate buffers for drainage directions and basin areas */
     for (i = 0; i < mxbuf; i += 1)
@@ -218,11 +216,11 @@ void wtrshed(char* prob, char* dirs, int nl, int ns, int mxbuf)
 				bas[0].offset = dir[0].offset = (off_t) rdline *bufsz;
 
 				probbuf = prob + bas[0].offset;
-				memcpy(probbuf, bas[0].p, bufsz);
+				memcpy(bas[0].p, probbuf, bufsz);
 				probbuf += bufsz;
 
 				dirsbuf = dirs + dir[0].offset;
-				memcpy(dirsbuf, bas[0].p, bufsz);
+				memcpy(bas[0].p, dirsbuf, bufsz);
 				dirsbuf += bufsz;
 
 				rdline--;
