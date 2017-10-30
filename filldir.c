@@ -185,7 +185,7 @@ void filldir(char* elev, char* dirs, int nl, struct band3 *bnd)
 
     // TODO: The original has i < nl, but this seems to fail on advance_band, because it 
     // forces 2 too many advances.
-    for (i = 0; i < nl - 2; i += 1) {
+    for (i = 0; i < nl - 1; i += 1) {
 		advance_band3mem(&elevbuf, bnd);
 		build_one_row(i, nl, bnd->ns, bnd, dir);
 		memcpy(dirsbuf, dir, bufsz);
