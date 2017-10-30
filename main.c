@@ -271,10 +271,12 @@ int main(int argc, char **argv)
     nbasins = dopolys(dirs, prob, nrows, ncols);
     if (!flag1->answer) {
     	// Determine the watershed for each sink.
+        G_message(_("Determining watershed for each sink..."));
     	wtrshed(prob, dirs, nrows, ncols, 4);
 
     	// Fill all of the watersheds up to the elevation necessary for drainage.
-    	ppupdate(elev, prob, nrows, nbasins, &bnd, &bndC);
+    	G_message(_("Filling watersheds..."));
+        ppupdate(elev, prob, nrows, nbasins, &bnd, &bndC);
 
     	// Repeat the first three steps to get the final directions.
     	G_message(_("Repeat to get the final directions..."));
