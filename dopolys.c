@@ -5,6 +5,87 @@
 #include <grass/raster.h>
 #include <grass/glocale.h>
 
+#include "ds.h"
+#include <stdlib.h>
+#include <math.h>
+#include <stdio.h>
+
+struct node {
+    struct node* next;
+    void* value;
+}
+
+struct queue {
+    struct node* head;
+    struct node* tail;
+    void (*deleter)(void*);
+    int size;
+}
+
+struct queue* queue_init(void (*deleter)(void*)) {
+    struct queue* q = (struct queue*) calloc(1, sizeof(struct queue));
+    q->deleter = deleter;
+    return q;
+}
+
+void queue_clear(struct queue* q) {
+    struct node* n;
+    while((n = queue_pop(q))) {
+        q->deleter(node->value);
+        free(node);
+    }
+    q->size = 0;
+}
+
+void queue_free(struct queue* q) {
+    queue_clear(q);
+    free(q);
+}
+
+void* queue_pop(struct queue* q) {
+    struct node* n = 0;
+    void* v = 0;
+    if(q->head) {
+        n = q->head;
+        if(q->head == q->tail) {
+            q->head = q->tail = 0;
+        } else {
+            q->head = q->head->next;
+        }
+        --q->size;
+    }
+    if(n) {
+        v = n->value;
+        free(n);
+    }
+    return v;
+}
+
+int queue_push(struct queue* q, void* value) {
+    struct node* n = (struct node*) calloc(1, sizeof(struct node));
+    n->value = value;
+    if(!q->tail) {
+        q->head = q->tail = n;
+    } else {
+        q->tail->next = n;
+        q->tail = n;
+    }
+    return ++q->size;
+}
+
+int queue_size(struct queue* q) {
+    return q->size;
+}
+
+int queue_empty(struct queue* q) {
+    return q->size == 0;
+}
+
+static void deleter(void* item) {
+    free(item);
+}
+
+/*
 void recurse_list(int flag, int *cells, int sz, int start)
 {
     int cnt, i, j, ii, jj;
@@ -31,6 +112,71 @@ void recurse_list(int flag, int *cells, int sz, int start)
 	    if (cells[cnt + 2] == 0)
 		recurse_list(flag, cells, sz, cnt);
 	}
+    }
+}
+*/
+
+struct rec {
+    int flag;
+    int* cells;
+    int sz;
+    int start;
+}
+
+void recurse_list(struct queue* q, int flag, int *cells, int sz, int start)
+{
+
+    struct queue* q = queue_init(&deleter);
+
+    struct rec* r = (struct rec*) calloc(1, sizeof(struct rec));
+    r->flag = flag;
+    r->cells = cells;
+    r->sz = sz;
+    r->start = start;
+    queue_push(q, r);
+
+    int cnt, i, j, ii, jj;
+    struct rec* rr;
+
+    while((r = queue_pop(q))) {
+
+        i = r->cells[r->start];
+        j = r->cells[r->start + 1];
+        r->cells[r->start + 2] = r->flag;
+
+        for (cnt = 0; cnt < r->sz; cnt += 3) {
+            ii = r->cells[cnt];
+            jj = r->cells[cnt + 1];
+
+            if (ii == i - 1 && (jj == j - 1 || jj == j || jj == j + 1)) {
+                if (cells[cnt + 2] == 0) {
+                    rr = (struct rec*) calloc(1, sizeof(struct rec));
+                    rr->flag = flag;
+                    rr->cells = cells;
+                    rr->sz = sz;
+                    rr->start = cnt;
+                    queue_push(q, rr);
+                }
+            } else if (ii == i && (jj == j - 1 || jj == j + 1)) {
+                if (cells[cnt + 2] == 0) {
+                    rr = (struct rec*) calloc(1, sizeof(struct rec));
+                    rr->flag = flag;
+                    rr->cells = cells;
+                    rr->sz = sz;
+                    rr->start = cnt;
+                    queue_push(q, rr);
+                }
+            } else if (ii == i + 1 && (jj == j - 1 || jj == j || jj == j + 1)) {
+                if (cells[cnt + 2] == 0) {
+                    rr = (struct rec*) calloc(1, sizeof(struct rec));
+                    rr->flag = flag;
+                    rr->cells = cells;
+                    rr->sz = sz;
+                    rr->start = cnt;
+                    queue_push(q, rr);                    
+                }
+            }
+        }
     }
 }
 
@@ -89,8 +235,8 @@ int dopolys(char* dirs, char* prob, int nl, int ns)
 	    	recurse_list(flag, cells, found, i);
 		}
     }
-    G_message(n_("Found %d unresolved area", 
-        "Found %d unresolved areas", flag), flag);
+    
+    G_message(n_("Found %d unresolved area", "Found %d unresolved areas", flag), flag);
 
     /* Compose a new raster map to contain the resulting assignments */
     probbuf = prob;
