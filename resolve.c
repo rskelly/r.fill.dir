@@ -206,7 +206,7 @@ void resolve(char* dirs, int nl, struct band3 *bnd)
 					  (CELL *) bnd->b[0], (CELL *) bnd->b[1],
 					  (CELL *) bnd->b[2], &active[i], &goagain);
 				    if (goagain)
-					activity = 1;
+						activity = 1;
 				}
 		    } while (goagain);
 
