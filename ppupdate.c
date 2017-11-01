@@ -2,7 +2,7 @@
 #include <string.h>
 #include <grass/gis.h>
 #include <grass/raster.h>
-#include <omp.h>
+//#include <omp.h>
 
 #include "tinf.h"
 
@@ -34,7 +34,7 @@ void ppupdate(char* elevs, char* prob, int nl, int nbasins, struct band3 *elev,
 {
     int i;
 
-    #pragma omp parallel
+    //#pragma omp parallel
     {
 	    int j, ii, n;
 	    CELL *here;
@@ -65,23 +65,23 @@ void ppupdate(char* elevs, char* prob, int nl, int nbasins, struct band3 *elev,
 	    elevbuf = elevs;
 	    probbuf = prob;
 
-	    #pragma omp critical(__prob)
+	    //#pragma omp critical(__prob)
 	    {
 		    advance_band3mem(&probbuf, basins);
 		    advance_band3mem(&probbuf, basins);
 		}
 
-		#pragma omp critical(__elev) 
+		//#pragma omp critical(__elev) 
 		{
 		    advance_band3mem(&elevbuf, elev);
 		    advance_band3mem(&elevbuf, elev);
 		}
 
-	    #pragma omp for
+	    //#pragma omp for
 	    for (i = 1; i < nl - 3; i += 1) {
-	    	#pragma omp critical(__prob)
+	    	//#pragma omp critical(__prob)
 			advance_band3mem(&probbuf, basins);
-			#pragma omp critical(__elev)
+			//#pragma omp critical(__elev)
 			advance_band3mem(&elevbuf, elev);
 
 			for (j = 1; j < basins->ns - 1; j += 1) {
@@ -215,10 +215,10 @@ void ppupdate(char* elevs, char* prob, int nl, int nbasins, struct band3 *elev,
 	    probbuf = prob;
 
 	    for (i = 0; i < nl; i += 1) {
-	    	#pragma omp critical(__elev)
+	    	//#pragma omp critical(__elev)
 	    	memcpy(elev->b[1], elevbuf, elev->sz);
 	    	elevbuf += elev->sz;
-	    	#pragma omp critical(__prob)
+	    	//#pragma omp critical(__prob)
 	    	memcpy(basins->b[1], probbuf, basins->sz);
 	    	probbuf += basins->sz;
 
@@ -231,7 +231,7 @@ void ppupdate(char* elevs, char* prob, int nl, int nbasins, struct band3 *elev,
 			}
 			
 			elevbuf -= elev->sz;
-			#pragma omp critical(__elev)
+			//#pragma omp critical(__elev)
 			memcpy(elevbuf, elev->b[1], elev->sz);
 	    }
 

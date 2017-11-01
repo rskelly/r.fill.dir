@@ -5,22 +5,19 @@
 #include <grass/raster.h>
 #include <grass/glocale.h>
 
-#include "ds.h"
-#include <stdlib.h>
-#include <math.h>
-#include <stdio.h>
-
 struct node {
     struct node* next;
     void* value;
-}
+};
 
 struct queue {
     struct node* head;
     struct node* tail;
     void (*deleter)(void*);
     int size;
-}
+};
+
+void* queue_pop(struct queue* q);
 
 struct queue* queue_init(void (*deleter)(void*)) {
     struct queue* q = (struct queue*) calloc(1, sizeof(struct queue));
@@ -31,8 +28,8 @@ struct queue* queue_init(void (*deleter)(void*)) {
 void queue_clear(struct queue* q) {
     struct node* n;
     while((n = queue_pop(q))) {
-        q->deleter(node->value);
-        free(node);
+        q->deleter(n->value);
+        free(n);
     }
     q->size = 0;
 }
@@ -69,6 +66,18 @@ int queue_push(struct queue* q, void* value) {
     } else {
         q->tail->next = n;
         q->tail = n;
+    }
+    return ++q->size;
+}
+
+int queue_insert(struct queue* q, void* value) {
+    struct node* n = (struct node*) calloc(1, sizeof(struct node));
+    n->value = value;
+    if(!q->head) {
+        q->head = q->tail = n;
+    } else {
+        n->next = q->head;
+        q->head = n;
     }
     return ++q->size;
 }
@@ -121,12 +130,10 @@ struct rec {
     int* cells;
     int sz;
     int start;
-}
+};
 
 void recurse_list(struct queue* q, int flag, int *cells, int sz, int start)
 {
-
-    struct queue* q = queue_init(&deleter);
 
     struct rec* r = (struct rec*) calloc(1, sizeof(struct rec));
     r->flag = flag;
@@ -155,7 +162,7 @@ void recurse_list(struct queue* q, int flag, int *cells, int sz, int start)
                     rr->cells = cells;
                     rr->sz = sz;
                     rr->start = cnt;
-                    queue_push(q, rr);
+                    queue_insert(q, rr);
                 }
             } else if (ii == i && (jj == j - 1 || jj == j + 1)) {
                 if (cells[cnt + 2] == 0) {
@@ -164,7 +171,7 @@ void recurse_list(struct queue* q, int flag, int *cells, int sz, int start)
                     rr->cells = cells;
                     rr->sz = sz;
                     rr->start = cnt;
-                    queue_push(q, rr);
+                    queue_insert(q, rr);
                 }
             } else if (ii == i + 1 && (jj == j - 1 || jj == j || jj == j + 1)) {
                 if (cells[cnt + 2] == 0) {
@@ -173,7 +180,7 @@ void recurse_list(struct queue* q, int flag, int *cells, int sz, int start)
                     rr->cells = cells;
                     rr->sz = sz;
                     rr->start = cnt;
-                    queue_push(q, rr);                    
+                    queue_insert(q, rr);                    
                 }
             }
         }
@@ -232,7 +239,9 @@ int dopolys(char* dirs, char* prob, int nl, int ns)
     for (i = 0; i < found; i += 3) {
 		if (cells[i + 2] == 0) {
 		    flag += 1;
-	    	recurse_list(flag, cells, found, i);
+            struct queue* q = queue_init(&deleter);
+	    	recurse_list(q, flag, cells, found, i);
+            queue_free(q);
 		}
     }
     
