@@ -7,6 +7,7 @@
 
 #include "ds.h"
 
+/*
 void recurse_list(int flag, int *cells, int sz, int start)
 {
     int cnt, i, j, ii, jj;
@@ -35,7 +36,8 @@ void recurse_list(int flag, int *cells, int sz, int start)
 	}
     }
 }
-/*
+*/
+
 struct rec {
     int flag;
     int* cells;
@@ -97,13 +99,12 @@ void recurse_list(struct queue* q, int flag, int *cells, int sz, int start)
         }
     }
 }
-*/
+
 
 /* scan the direction file and construct a list of all cells with negative
  * values.  The list will contain the row and column of the cell and a space
  * to include the polygon number */
 
-//int dopolys(int fd, int fm, int nl, int ns)
 int dopolys(char* dirs, char* prob, int nl, int ns)
 {
     int cnt, i, j, found, flag;
@@ -147,15 +148,17 @@ int dopolys(char* dirs, char* prob, int nl, int ns)
        and carrying the same assignment over to adjacent cells.  Repeat
        recursively */
 
-    //struct queue* q = queue_init(&q_deleter);
+    struct queue* q = queue_init(&q_deleter);
 
     flag = 0;
     for (i = 0; i < found; i += 3) {
 		if (cells[i + 2] == 0) {
 		    flag += 1;
-	    	recurse_list(flag, cells, found, i);
+	    	recurse_list(q, flag, cells, found, i);
 		}
     }
+    
+    queue_free(q);
     
     G_message(n_("Found %d unresolved area", "Found %d unresolved areas", flag), flag);
 
