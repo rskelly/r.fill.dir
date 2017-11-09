@@ -12,6 +12,7 @@ struct whereandwhat
     CELL *p;
 };
 
+/*
 int recurse_cell(CELL flag, int i, int j, int nl, int ns,
 		 struct whereandwhat bas[], struct whereandwhat dir[])
 {
@@ -61,6 +62,67 @@ int recurse_cell(CELL flag, int i, int j, int nl, int ns,
 	if (bas[i + 1].p[j + 1] == -1 && !Rast_is_c_null_value(&edge) &&
 	    edge == 64)
 	    rc += recurse_cell(flag, i + 1, j + 1, nl, ns, bas, dir);
+    }
+    return rc;
+}
+*/
+
+int recurse_cell(CELL flag, int i, int j, int nl, int ns,
+		 struct whereandwhat bas[], struct whereandwhat dir[])
+{
+    CELL edge;
+    int rc = 0;
+
+    if (j == 0 && j >= ns - 1)
+		return rc;
+
+    if (bas[i].p[j] != flag) {
+		rc = 1;
+		bas[i].p[j] = flag;
+    }
+
+    if (i > 0) {
+		edge = dir[i - 1].p[j - 1];
+	
+		if (bas[i - 1].p[j - 1] == -1 && !Rast_is_c_null_value(&edge) && edge == 4)
+	    	rc += recurse_cell(flag, i - 1, j - 1, nl, ns, bas, dir);
+	
+		edge = dir[i - 1].p[j];
+	
+		if (bas[i - 1].p[j] == -1 && !Rast_is_c_null_value(&edge) && edge == 8)
+		    rc += recurse_cell(flag, i - 1, j, nl, ns, bas, dir);
+	
+		edge = dir[i - 1].p[j + 1];
+	
+		if (bas[i - 1].p[j + 1] == -1 && !Rast_is_c_null_value(&edge) && edge == 16)
+		    rc += recurse_cell(flag, i - 1, j + 1, nl, ns, bas, dir);
+    }
+
+    edge = dir[i].p[j - 1];
+
+    if (bas[i].p[j - 1] == -1 && !Rast_is_c_null_value(&edge) && edge == 2)
+		rc += recurse_cell(flag, i, j - 1, nl, ns, bas, dir);
+
+    edge = dir[i].p[j + 1];
+
+    if (bas[i].p[j + 1] == -1 && !Rast_is_c_null_value(&edge) && edge == 32)
+		rc += recurse_cell(flag, i, j + 1, nl, ns, bas, dir);
+
+    if (i < nl - 1) {
+		edge = dir[i + 1].p[j - 1];
+		
+		if (bas[i + 1].p[j - 1] == -1 && !Rast_is_c_null_value(&edge) && edge == 1)
+		    rc += recurse_cell(flag, i + 1, j - 1, nl, ns, bas, dir);
+
+		edge = dir[i + 1].p[j];
+		
+		if (bas[i + 1].p[j] == -1 && !Rast_is_c_null_value(&edge) && edge == 128)
+	    	rc += recurse_cell(flag, i + 1, j, nl, ns, bas, dir);
+	
+		edge = dir[i + 1].p[j + 1];
+		
+		if (bas[i + 1].p[j + 1] == -1 && !Rast_is_c_null_value(&edge) && edge == 64)
+	    	rc += recurse_cell(flag, i + 1, j + 1, nl, ns, bas, dir);
     }
     return rc;
 }
@@ -122,6 +184,7 @@ void wtrshed(char* prob, char* dirs, int nl, int ns, int mxbuf)
 		    for (j = 1; j < ns - 1; j += 1) {
 				flag = bas[sline].p[j];
 				if (flag > 0) {
+					//G_verbose_message(_("Recurse cell (a)."));
 			    	if (recurse_cell(flag, sline, j, nline, ns, bas, dir) > 0)
 						repeat = 1;
 				}
@@ -190,6 +253,7 @@ void wtrshed(char* prob, char* dirs, int nl, int ns, int mxbuf)
 		    for (j = 1; j < ns - 1; j += 1) {
 				flag = bas[nline - 1].p[j];
 				if (flag > 0) {
+					//G_verbose_message(_("Recurse cell (b)."));
 				    if (recurse_cell(flag, nline - 1, j, nline, ns, bas, dir) > 0)
 						repeat = 1;
 				}
@@ -220,7 +284,7 @@ void wtrshed(char* prob, char* dirs, int nl, int ns, int mxbuf)
 				probbuf += bufsz;
 
 				dirsbuf = dirs + dir[0].offset;
-				memcpy(bas[0].p, dirsbuf, bufsz);
+				memcpy(dir[0].p, dirsbuf, bufsz);
 				dirsbuf += bufsz;
 
 				rdline--;

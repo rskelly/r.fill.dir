@@ -6,86 +6,7 @@
 #include <grass/glocale.h>
 
 #include "ds.h"
-#include <stdlib.h>
-#include <math.h>
-#include <stdio.h>
 
-struct node {
-    struct node* next;
-    void* value;
-}
-
-struct queue {
-    struct node* head;
-    struct node* tail;
-    void (*deleter)(void*);
-    int size;
-}
-
-struct queue* queue_init(void (*deleter)(void*)) {
-    struct queue* q = (struct queue*) calloc(1, sizeof(struct queue));
-    q->deleter = deleter;
-    return q;
-}
-
-void queue_clear(struct queue* q) {
-    struct node* n;
-    while((n = queue_pop(q))) {
-        q->deleter(node->value);
-        free(node);
-    }
-    q->size = 0;
-}
-
-void queue_free(struct queue* q) {
-    queue_clear(q);
-    free(q);
-}
-
-void* queue_pop(struct queue* q) {
-    struct node* n = 0;
-    void* v = 0;
-    if(q->head) {
-        n = q->head;
-        if(q->head == q->tail) {
-            q->head = q->tail = 0;
-        } else {
-            q->head = q->head->next;
-        }
-        --q->size;
-    }
-    if(n) {
-        v = n->value;
-        free(n);
-    }
-    return v;
-}
-
-int queue_push(struct queue* q, void* value) {
-    struct node* n = (struct node*) calloc(1, sizeof(struct node));
-    n->value = value;
-    if(!q->tail) {
-        q->head = q->tail = n;
-    } else {
-        q->tail->next = n;
-        q->tail = n;
-    }
-    return ++q->size;
-}
-
-int queue_size(struct queue* q) {
-    return q->size;
-}
-
-int queue_empty(struct queue* q) {
-    return q->size == 0;
-}
-
-static void deleter(void* item) {
-    free(item);
-}
-
-/*
 void recurse_list(int flag, int *cells, int sz, int start)
 {
     int cnt, i, j, ii, jj;
@@ -114,19 +35,16 @@ void recurse_list(int flag, int *cells, int sz, int start)
 	}
     }
 }
-*/
-
+/*
 struct rec {
     int flag;
     int* cells;
     int sz;
     int start;
-}
+};
 
 void recurse_list(struct queue* q, int flag, int *cells, int sz, int start)
 {
-
-    struct queue* q = queue_init(&deleter);
 
     struct rec* r = (struct rec*) calloc(1, sizeof(struct rec));
     r->flag = flag;
@@ -155,7 +73,7 @@ void recurse_list(struct queue* q, int flag, int *cells, int sz, int start)
                     rr->cells = cells;
                     rr->sz = sz;
                     rr->start = cnt;
-                    queue_push(q, rr);
+                    queue_insert(q, rr);
                 }
             } else if (ii == i && (jj == j - 1 || jj == j + 1)) {
                 if (cells[cnt + 2] == 0) {
@@ -164,7 +82,7 @@ void recurse_list(struct queue* q, int flag, int *cells, int sz, int start)
                     rr->cells = cells;
                     rr->sz = sz;
                     rr->start = cnt;
-                    queue_push(q, rr);
+                    queue_insert(q, rr);
                 }
             } else if (ii == i + 1 && (jj == j - 1 || jj == j || jj == j + 1)) {
                 if (cells[cnt + 2] == 0) {
@@ -173,12 +91,13 @@ void recurse_list(struct queue* q, int flag, int *cells, int sz, int start)
                     rr->cells = cells;
                     rr->sz = sz;
                     rr->start = cnt;
-                    queue_push(q, rr);                    
+                    queue_insert(q, rr);                    
                 }
             }
         }
     }
 }
+*/
 
 /* scan the direction file and construct a list of all cells with negative
  * values.  The list will contain the row and column of the cell and a space
@@ -227,6 +146,8 @@ int dopolys(char* dirs, char* prob, int nl, int ns)
     /* Loop through the list, assigning polygon numbers to unassigned entries
        and carrying the same assignment over to adjacent cells.  Repeat
        recursively */
+
+    //struct queue* q = queue_init(&q_deleter);
 
     flag = 0;
     for (i = 0; i < found; i += 3) {

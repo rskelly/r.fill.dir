@@ -227,12 +227,14 @@ int main(int argc, char **argv)
 
     in_buf = get_buf();
 
+    int mb = 1024 * 1024;
+
     // The size of the memory mappings. Must be rounded up to the nearest page boundary.
     off_t mapsize = nrows * ncols;
     off_t elevsize = ((mapsize * bpe()) / sysconf(_SC_PAGE_SIZE) + 1) * sysconf(_SC_PAGE_SIZE);
     off_t dirsize = ((mapsize * sizeof(CELL)) / sysconf(_SC_PAGE_SIZE) + 1) * sysconf(_SC_PAGE_SIZE);
     off_t probsize = ((mapsize * sizeof(CELL)) / sysconf(_SC_PAGE_SIZE) + 1) * sysconf(_SC_PAGE_SIZE);
-    G_verbose_message(_("Memory allocations: elev: %ld; dirs: %ld; probs: %ld"), elevsize, dirsize, probsize);
+    G_verbose_message(_("Memory allocations: elev: %ldMB; dirs: %ldMB; probs: %ldMB"), elevsize / mb, dirsize / mb, probsize / mb);
 
     // Pointers to memory (mapped or malloced). Replaces the file handles used in the original.
     char* elev;
@@ -243,6 +245,12 @@ int main(int argc, char **argv)
     char* elevbuf;
     char* dirsbuf;
     char* probbuf;
+
+    if(flag2->answer) {
+        G_important_message(_("Using mapped memory."));
+    } else {
+        G_important_message(_("Using physical RAM."));
+    }
 
     if(!allocate(&elev, elevsize, &dirs, dirsize, &prob, probsize, flag2)) {
         G_important_message(_("Failed to allocate memory. Try using mapped?"));

@@ -16,18 +16,16 @@ void check(CELL newdir, CELL * dir, void *center, void *edge, double cnst,
 
     /* always discharge to a null boundary */
     if (is_null(edge)) {
-	*oldslope = DBL_MAX;
-	*dir = newdir;
-    }
-    else {
-	newslope = slope(center, edge, cnst);
-	if (newslope == *oldslope) {
-	    *dir += newdir;
-	}
-	else if (newslope > *oldslope) {
-	    *oldslope = newslope;
-	    *dir = newdir;
-	}
+		*oldslope = DBL_MAX;
+		*dir = newdir;
+    } else {
+		newslope = slope(center, edge, cnst);
+		if (newslope == *oldslope) {
+	    	*dir += newdir;
+		} else if (newslope > *oldslope) {
+		    *oldslope = newslope;
+		    *dir = newdir;
+		}
     }
 
     return;
@@ -48,30 +46,32 @@ int fill_row(int nl, int ns, struct band3 *bnd)
 
     rc = 0;
     for (j = 1; j < ns - 1; j += 1) {
-	offset = j * bpe();
-	center = bnd->b[1] + offset;
-	if (is_null(center))
-	    return rc;
+		offset = j * bpe();
+		center = bnd->b[1] + offset;
+		if (is_null(center))
+	    	continue; //return rc;
 
-	edge = bnd->b[0] + offset;
-	min = edge - inc;
-	min = get_min(min, edge);
-	min = get_min(min, edge + inc);
+		edge = bnd->b[0] + offset;
+		min = edge - inc;
+		min = get_min(min, edge);
+		min = get_min(min, edge + inc);
 
-	min = get_min(min, center - inc);
-	min = get_min(min, center + inc);
+		min = get_min(min, center - inc);
+		min = get_min(min, center + inc);
 
-	edge = bnd->b[2] + offset;
-	min = get_min(min, edge - inc);
-	min = get_min(min, edge);
-	min = get_min(min, edge + inc);
+		edge = bnd->b[2] + offset;
+		min = get_min(min, edge - inc);
+		min = get_min(min, edge);
+		min = get_min(min, edge + inc);
 
-	if (get_min(center, min) == center) {
-	    rc = 1;
-	    memcpy(center, min, bpe());
-	}
-
+		if (get_min(center, min) == center) {
+		    rc = 1;
+		    memcpy(center, min, bpe());
+		}
     }
+
+    //G_free(min);
+
     return rc;
 }
 
@@ -183,9 +183,7 @@ void filldir(char* elev, char* dirs, int nl, struct band3 *bnd)
 
     advance_band3mem(&elevbuf, bnd);
 
-    // TODO: The original has i < nl, but this seems to fail on advance_band, because it 
-    // forces 2 too many advances.
-    for (i = 0; i < nl - 1; i += 1) {
+    for (i = 0; i < nl - 2; i += 1) {
 		advance_band3mem(&elevbuf, bnd);
 		build_one_row(i, nl, bnd->ns, bnd, dir);
 		memcpy(dirsbuf, dir, bufsz);
